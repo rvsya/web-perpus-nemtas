@@ -22,8 +22,8 @@ const ADMIN_PASS_HASHES = ["cGVycHVzbmVtdGFzXzY2"]; // base64 dari 'perpusnemtas
 // ============================================================================
 const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFyej-btIsewQZd5lAQbbKjTdQv7syq5updjjhKHh35bc2XMRO3AZ8qnQlxjGQTJ7k/exec";
 
-// Menggunakan URL permanen di atas, atau URL yang disetel di menu admin
-let GOOGLE_SCRIPT_URL = localStorage.getItem('lib_sheets_url') || DEFAULT_GOOGLE_SCRIPT_URL;
+// Selalu utamakan URL permanen di atas
+let GOOGLE_SCRIPT_URL = DEFAULT_GOOGLE_SCRIPT_URL || localStorage.getItem('lib_sheets_url') || '';
 
 // ============================================================================
 // 2. JAM WIB REAL-TIME
@@ -92,6 +92,10 @@ function switchTab(tab) {
         updateAdminUI();
         updateDbStatusUI();
         loadDashboardData();
+        // Otomatis tarik data terbaru dari Google Sheets agar data dari HP siswa lain langsung muncul!
+        if (GOOGLE_SCRIPT_URL) {
+            syncDataFromCloud().catch(() => {});
+        }
     }
 }
 
@@ -312,6 +316,7 @@ async function handleDeleteRow(visitId) {
         try {
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'delete', id: visitId })
             }).catch(err => console.warn('Gagal sync hapus ke Google Sheets:', err));
@@ -384,6 +389,7 @@ async function executeConfirmDeleteAll() {
         try {
             fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
+                mode: 'no-cors',
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify({ action: 'clearAll' })
             }).catch(err => console.warn('Gagal sync reset ke Google Sheets:', err));
@@ -620,6 +626,7 @@ async function sendVisitToGoogleSheets(visit) {
     try {
         await fetch(GOOGLE_SCRIPT_URL, {
             method: 'POST',
+            mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain;charset=utf-8' },
             body: JSON.stringify({ action: 'add', ...visit })
         });
@@ -629,7 +636,7 @@ async function sendVisitToGoogleSheets(visit) {
     }
 }
 
-async function syncDataFromCloud() {
+async function syncDataFromCloud(isManual = false) {
     if (!GOOGLE_SCRIPT_URL) {
         alert('URL Google Sheets belum dipasang. Silakan tempelkan URL Web App Anda pada DEFAULT_GOOGLE_SCRIPT_URL di file jawa.js.');
         return;
@@ -646,7 +653,15 @@ async function syncDataFromCloud() {
 
     try {
         const response = await fetch(GOOGLE_SCRIPT_URL);
-        const result = await response.json();
+        const text = await response.text();
+        
+        let result;
+        try {
+            result = JSON.parse(text);
+        } catch (jsonErr) {
+            console.error('Tanggapan Google Apps Script bukan JSON:', text);
+            throw new Error('Google Apps Script tidak mengembalikan JSON. Kemungkinan hak akses "Siapa saja (Anyone)" belum dipilih saat Deploy, atau kode di Apps Script belum di-Save sebelum Deploy.');
+        }
 
         if (result && result.status === 'success' && Array.isArray(result.data)) {
             // Update data lokal dengan data terbaru dari Google Sheets
@@ -654,16 +669,19 @@ async function syncDataFromCloud() {
             loadDashboardData();
             showToast(`✅ Sinkronisasi sukses! (${result.data.length} data dimuat)`);
         } else {
-            showToast('⚠️ Tanggapan dari Google Sheets tidak sesuai format.');
+            showToast('⚠️ Tanggapan: ' + (result.message || 'Format tidak sesuai'));
         }
     } catch (error) {
         console.error('Error sync Google Sheets:', error);
-        showToast('❌ Gagal menyinkronkan dengan Google Sheets. Periksa URL atau koneksi internet.');
+        showToast('❌ Gagal menyinkronkan dengan Google Sheets.');
+        if (isManual) {
+            alert(`⚠️ Gagal Sinkronisasi dengan Google Sheets!\n\nKemungkinan Penyebab:\n1. Hak akses "Siapa saja (Anyone)" belum dipilih saat Deploy Aplikasi Web.\n2. Kode belum di-Save atau belum di-Deploy sebagai versi baru.\n\nTips Diagnostik:\nCoba copy & buka URL ini langsung di tab baru browser:\n${GOOGLE_SCRIPT_URL}\n\nJika yang muncul adalah halaman Login Google atau error, ikuti panduan perbaikan yang muncul.`);
+        }
     } finally {
         if (indicator) indicator.className = 'status-indicator connected';
         if (btnSync) {
             btnSync.disabled = false;
-            btnSync.innerText = '🔄 Sinkron';
+            btnSync.innerText = '🔄 Sinkronkan Data';
         }
     }
 }
