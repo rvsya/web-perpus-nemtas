@@ -20,7 +20,7 @@ const ADMIN_PASS_HASHES = ["cGVycHVzbmVtdGFzXzY2"]; // base64 dari 'perpusnemtas
 // AGAR TERCANTOL PERMANEN DI SEMUA HP / LAPTOP SISWA!
 // Contoh: "https://script.google.com/macros/s/AKfycb.../exec"
 // ============================================================================
-const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFyej-btIsewQZd5lAQbbKjTdQv7syq5updjjhKHh35bc2XMRO3AZ8qnQlxjGQTJ7k/exec";
+const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQgA5hF6siq121LeGsuD3_gv-7mLh78DHg15vA264cmQYiH3JvMd-Yjor2bcDFzWfy/exec";
 
 // Selalu utamakan URL permanen di atas
 let GOOGLE_SCRIPT_URL = DEFAULT_GOOGLE_SCRIPT_URL || localStorage.getItem('lib_sheets_url') || '';
@@ -94,7 +94,7 @@ function switchTab(tab) {
         loadDashboardData();
         // Otomatis tarik data terbaru dari Google Sheets agar data dari HP siswa lain langsung muncul!
         if (GOOGLE_SCRIPT_URL) {
-            syncDataFromCloud().catch(() => {});
+            syncDataFromCloud().catch(() => { });
         }
     }
 }
@@ -654,7 +654,7 @@ async function syncDataFromCloud(isManual = false) {
     try {
         const response = await fetch(GOOGLE_SCRIPT_URL);
         const text = await response.text();
-        
+
         let result;
         try {
             result = JSON.parse(text);
