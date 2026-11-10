@@ -12,8 +12,8 @@
 // 1. KONFIGURASI & STATE
 // ============================================================================
 
-// Password Admin Bawaan (Bisa 'perpusnemtas_66' atau 'admin123')
-const ADMIN_PASS_HASHES = ["cGVycHVzbmVtdGFzXzY2", "YWRtaW4xMjM="]; // base64 dari 'perpusnemtas_66' dan 'admin123'
+// Password Admin Resmi ('perpusnemtas_66')
+const ADMIN_PASS_HASHES = ["cGVycHVzbmVtdGFzXzY2"]; // base64 dari 'perpusnemtas_66'
 
 // URL Web App Google Apps Script (Tersimpan di LocalStorage)
 let GOOGLE_SCRIPT_URL = localStorage.getItem('lib_sheets_url') || '';
