@@ -15,8 +15,15 @@
 // Password Admin Resmi ('perpusnemtas_66')
 const ADMIN_PASS_HASHES = ["cGVycHVzbmVtdGFzXzY2"]; // base64 dari 'perpusnemtas_66'
 
-// URL Web App Google Apps Script (Tersimpan di LocalStorage)
-let GOOGLE_SCRIPT_URL = localStorage.getItem('lib_sheets_url') || '';
+// ============================================================================
+// TEMPELKAN URL HASIL DEPLOY GOOGLE APPS SCRIPT ANDA DI SINI
+// AGAR TERCANTOL PERMANEN DI SEMUA HP / LAPTOP SISWA!
+// Contoh: "https://script.google.com/macros/s/AKfycb.../exec"
+// ============================================================================
+const DEFAULT_GOOGLE_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxFyej-btIsewQZd5lAQbbKjTdQv7syq5updjjhKHh35bc2XMRO3AZ8qnQlxjGQTJ7k/exec";
+
+// Menggunakan URL permanen di atas, atau URL yang disetel di menu admin
+let GOOGLE_SCRIPT_URL = localStorage.getItem('lib_sheets_url') || DEFAULT_GOOGLE_SCRIPT_URL;
 
 // ============================================================================
 // 2. JAM WIB REAL-TIME
@@ -24,19 +31,19 @@ let GOOGLE_SCRIPT_URL = localStorage.getItem('lib_sheets_url') || '';
 
 function updateWIBClock() {
     const now = new Date();
-    const options = { 
-        timeZone: 'Asia/Jakarta', 
-        year: 'numeric', 
-        month: '2-digit', 
-        day: '2-digit', 
-        hour: '2-digit', 
-        minute: '2-digit', 
-        second: '2-digit', 
-        hour12: false 
+    const options = {
+        timeZone: 'Asia/Jakarta',
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        hour12: false
     };
     const formatter = new Intl.DateTimeFormat('id-ID', options);
     const parts = formatter.formatToParts(now);
-    
+
     let dateStr = '', timeStr = '';
 
     parts.forEach(p => {
@@ -108,7 +115,8 @@ function handleKelasChange() {
 
 async function handleSubmit(e) {
     e.preventDefault();
-    
+
+    const submitBtn = document.getElementById('btnSubmitForm');
     const nama = document.getElementById('nama').value.trim();
     const kelasSelect = document.getElementById('kelas').value;
     const kelasLainnya = document.getElementById('kelasLainnya').value.trim();
@@ -130,14 +138,20 @@ async function handleSubmit(e) {
     const isoDate = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(now);
     const uniqueId = 'v_' + Date.now() + '_' + Math.random().toString(36).substr(2, 4);
 
-    const newVisit = { 
-        id: uniqueId, 
-        nama, 
-        kelas: finalKelas, 
-        tujuan, 
-        waktu, 
-        isoDate 
+    const newVisit = {
+        id: uniqueId,
+        nama,
+        kelas: finalKelas,
+        tujuan,
+        waktu,
+        isoDate
     };
+
+    // Cegah klik ganda pada tombol submit
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.innerText = 'Menyimpan Kunjungan...';
+    }
 
     // 1. Simpan ke LocalStorage langsung (Respons Cepat)
     let visits = getLocalVisits();
@@ -153,7 +167,12 @@ async function handleSubmit(e) {
 
     // 3. Kirim ke Google Sheets di background jika URL terhubung
     if (GOOGLE_SCRIPT_URL) {
-        sendVisitToGoogleSheets(newVisit);
+        await sendVisitToGoogleSheets(newVisit);
+    }
+
+    if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.innerText = 'Kirim Kunjungan';
     }
 }
 
@@ -179,7 +198,7 @@ function openAdminModal() {
     const modal = document.getElementById('modalAdmin');
     const input = document.getElementById('adminPasswordInput');
     const errorEl = document.getElementById('adminLoginError');
-    
+
     if (modal) {
         modal.classList.remove('hidden');
         input.value = '';
@@ -405,7 +424,7 @@ function saveLocalVisits(visits) {
 function loadDashboardData(filteredVisits = null) {
     const visits = filteredVisits || getLocalVisits();
     const adminActive = isAdmin();
-    
+
     // 1. Tampilkan Tabel Riwayat Kunjungan
     const logBody = document.getElementById('logTableBody');
     const thAksi = document.getElementById('thAksi');
@@ -434,7 +453,7 @@ function loadDashboardData(filteredVisits = null) {
     // 2. Hitung & Tampilkan Peringkat Keaktifan Pengunjung
     const allVisits = getLocalVisits();
     const summaryMap = {};
-    
+
     allVisits.forEach(v => {
         const cleanNama = (v.nama || '').trim().toLowerCase();
         const cleanKelas = (v.kelas || '').trim().toLowerCase();
@@ -448,7 +467,7 @@ function loadDashboardData(filteredVisits = null) {
 
     const sortedSummary = Object.values(summaryMap).sort((a, b) => b.count - a.count);
     const rankingBody = document.getElementById('rankingTableBody');
-    
+
     if (sortedSummary.length === 0) {
         rankingBody.innerHTML = `<tr><td colspan="4" class="text-center" style="color: #94a3b8; padding: 2rem;">Belum ada data statistik kunjungan.</td></tr>`;
     } else {
@@ -560,8 +579,8 @@ function downloadRekapCSV() {
     // Gunakan BOM (\uFEFF) agar Microsoft Excel membaca format UTF-8 dengan tepat tanpa error encoding
     const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
     const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
-    const fileName = selectedDate 
-        ? `Rekap_Perpus_SMKN6_${selectedDate}.csv` 
+    const fileName = selectedDate
+        ? `Rekap_Perpus_SMKN6_${selectedDate}.csv`
         : `Rekap_Perpus_SMKN6_Semua_${today}.csv`;
 
     const link = document.createElement('a');
@@ -634,7 +653,7 @@ function saveDbConfig() {
         localStorage.removeItem('lib_sheets_url');
         showToast('ℹ️ Mode LocalStorage diaktifkan.');
     }
-    
+
     closeDbModal();
     updateDbStatusUI();
 }
@@ -734,9 +753,9 @@ function escapeHtml(string) {
 document.addEventListener('DOMContentLoaded', () => {
     updateAdminUI();
     updateDbStatusUI();
-    
+
     // Jika sudah ada URL Google Sheets, sinkronkan otomatis saat awal buka
     if (GOOGLE_SCRIPT_URL) {
-        syncDataFromCloud().catch(() => {});
+        syncDataFromCloud().catch(() => { });
     }
 });
