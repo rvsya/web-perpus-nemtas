@@ -244,14 +244,10 @@ function updateAdminUI() {
     const btnHapusSemua = document.getElementById('btnHapusSemua');
     const thAksi = document.getElementById('thAksi');
     const btnRekap = document.getElementById('btnRekap');
-    const btnDbConfig = document.getElementById('btnDbConfig');
 
-    // Dashboard Rekap & Pengaturan Database HANYA tampil jika admin sudah login
+    // Dashboard Rekap HANYA tampil jika admin sudah login
     if (btnRekap) {
         btnRekap.classList.toggle('hidden', !adminActive);
-    }
-    if (btnDbConfig) {
-        btnDbConfig.classList.toggle('hidden', !adminActive);
     }
 
     if (btnAdminNav) {
@@ -609,61 +605,13 @@ function updateDbStatusUI() {
 
     if (GOOGLE_SCRIPT_URL) {
         indicator.className = 'status-indicator connected';
-        title.innerHTML = 'Mode Database: <strong>Google Sheets (Cloud)</strong>';
-        desc.innerText = 'Data kunjungan tersinkron secara online ke Google Spreadsheet.';
+        title.innerHTML = 'Mode Database: <strong>Google Sheets (Tersambung Cloud)</strong>';
+        desc.innerText = 'Data kunjungan tersinkron otomatis ke Google Spreadsheet SMKN 6 Tangsel.';
     } else {
         indicator.className = 'status-indicator local';
-        title.innerHTML = 'Mode Database: <strong>Local Storage (Browser)</strong>';
-        desc.innerText = 'Tersimpan lokal di browser ini. Klik "Set Google Sheets" untuk menghubungkan spreadsheet.';
+        title.innerHTML = 'Mode Database: <strong>Penyimpanan Lokal</strong>';
+        desc.innerText = 'URL Google Sheets belum dipasang di baris ke-21 file jawa.js (DEFAULT_GOOGLE_SCRIPT_URL).';
     }
-}
-
-function openDbModal() {
-    if (!isAdmin()) {
-        alert('Akses terbatas! Pengaturan database hanya dapat dibuka oleh Admin Perpustakaan.');
-        openAdminModal();
-        return;
-    }
-    const modal = document.getElementById('modalDb');
-    const input = document.getElementById('sheetsWebappUrl');
-    if (modal) {
-        modal.classList.remove('hidden');
-        input.value = GOOGLE_SCRIPT_URL;
-    }
-}
-
-function closeDbModal() {
-    const modal = document.getElementById('modalDb');
-    if (modal) modal.classList.add('hidden');
-}
-
-function saveDbConfig() {
-    const url = document.getElementById('sheetsWebappUrl').value.trim();
-    if (url && !url.includes('script.google.com')) {
-        alert('URL tidak valid. Pastikan URL berasal dari hasil Deploy Google Apps Script (berisi script.google.com).');
-        return;
-    }
-
-    GOOGLE_SCRIPT_URL = url;
-    if (url) {
-        localStorage.setItem('lib_sheets_url', url);
-        showToast('🔗 Berhasil menyimpan URL Google Sheets!');
-        syncDataFromCloud();
-    } else {
-        localStorage.removeItem('lib_sheets_url');
-        showToast('ℹ️ Mode LocalStorage diaktifkan.');
-    }
-
-    closeDbModal();
-    updateDbStatusUI();
-}
-
-function disconnectDb() {
-    GOOGLE_SCRIPT_URL = '';
-    localStorage.removeItem('lib_sheets_url');
-    closeDbModal();
-    updateDbStatusUI();
-    showToast('ℹ️ Berpindah ke penyimpanan LocalStorage.');
 }
 
 async function sendVisitToGoogleSheets(visit) {
@@ -683,8 +631,7 @@ async function sendVisitToGoogleSheets(visit) {
 
 async function syncDataFromCloud() {
     if (!GOOGLE_SCRIPT_URL) {
-        alert('URL Google Sheets belum disetting. Silakan klik "Set Google Sheets" terlebih dahulu.');
-        openDbModal();
+        alert('URL Google Sheets belum dipasang. Silakan tempelkan URL Web App Anda pada DEFAULT_GOOGLE_SCRIPT_URL di file jawa.js.');
         return;
     }
 

@@ -17,7 +17,6 @@
             <div class="nav-buttons">
                 <button onclick="switchTab('form')" id="btnForm" class="tab-btn active">Form Kunjungan</button>
                 <button onclick="switchTab('rekap')" id="btnRekap" class="tab-btn hidden">Dashboard Rekap</button>
-                <button onclick="openDbModal()" id="btnDbConfig" class="tab-btn tab-btn-subtle hidden" title="Pengaturan Database Google Sheets">⚙️ Database</button>
                 <button onclick="handleAdminBtnClick()" id="btnAdminNav" class="tab-btn tab-btn-admin">🔐 Login Admin</button>
             </div>
         </div>
@@ -113,8 +112,7 @@
                         </div>
                     </div>
                     <div class="db-status-actions">
-                        <button onclick="syncDataFromCloud()" id="btnSyncCloud" class="btn-action-sm">🔄 Sinkron</button>
-                        <button onclick="openDbModal()" class="btn-action-sm">⚙️ Set Google Sheets</button>
+                        <button onclick="syncDataFromCloud()" id="btnSyncCloud" class="btn-action-sm">🔄 Sinkronkan Data</button>
                     </div>
                 </div>
             </div>
@@ -203,52 +201,6 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeAdminModal()">Batal</button>
                 <button class="btn-primary" onclick="executeAdminLogin()">Masuk sebagai Admin</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PENGATURAN GOOGLE SHEETS -->
-    <div id="modalDb" class="modal-backdrop hidden">
-        <div class="modal-box modal-lg">
-            <div class="modal-header">
-                <h3>📊 Konfigurasi Database Google Sheets</h3>
-                <button class="modal-close" onclick="closeDbModal()">&times;</button>
-            </div>
-            <div class="modal-body">
-                <p class="text-xs text-gray mb-3">
-                    Gunakan Google Spreadsheet sebagai database gratis & real-time! Data kunjungan dari pengunjung akan langsung tersimpan ke spreadsheet Anda.
-                </p>
-
-                <div class="form-group">
-                    <label for="sheetsWebappUrl">Google Apps Script Web App URL</label>
-                    <input type="url" id="sheetsWebappUrl" placeholder="https://script.google.com/macros/s/.../exec">
-                    <small class="text-xs text-gray">Masukkan URL hasil Deploy Web App dari Google Apps Script.</small>
-                </div>
-
-                <div class="guide-accordion">
-                    <details>
-                        <summary><strong>📖 Cara Mudah Membuat Database Google Sheets (4 Langkah)</strong></summary>
-                        <div class="guide-content">
-                            <ol>
-                                <li>Buka <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> untuk membuat Google Spreadsheet baru.</li>
-                                <li>Klik menu <strong>Ekstensi (Extensions)</strong> &gt; <strong>Apps Script</strong>.</li>
-                                <li>Hapus semua kode di sana, lalu tempel kode script yang ada di file <code>google_apps_script.js</code> di folder web ini.</li>
-                                <li>Klik tombol <strong>Terapkan (Deploy)</strong> &gt; <strong>Penerapan baru (New deployment)</strong>:
-                                    <ul>
-                                        <li>Pilih jenis: <strong>Aplikasi Web (Web app)</strong></li>
-                                        <li>Jalankan sebagai: <strong>Saya (Me)</strong></li>
-                                        <li>Siapa yang memiliki akses: <strong>Siapa saja (Anyone)</strong></li>
-                                    </ul>
-                                </li>
-                                <li>Salin <strong>URL Aplikasi Web</strong> yang dihasilkan dan tempel pada kolom di atas!</li>
-                            </ol>
-                        </div>
-                    </details>
-                </div>
-            </div>
-            <div class="modal-footer">
-                <button class="btn-secondary" onclick="disconnectDb()">Gunakan LocalStorage Saja</button>
-                <button class="btn-primary" onclick="saveDbConfig()">Simpan & Hubungkan</button>
             </div>
         </div>
     </div>
