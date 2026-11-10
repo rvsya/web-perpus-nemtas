@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perpustakaan SMKN 6 Tangerang Selatan</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <span class="nav-icon">📚</span>
+                <h1>Perpustakaan SMKN 6 Tangerang Selatan</h1>
+            </div>
+            <div class="nav-buttons">
+                <button onclick="switchTab('form')" id="btnForm" class="tab-btn active">Form Kunjungan</button>
+                <button onclick="switchTab('rekap')" id="btnRekap" class="tab-btn hidden">Dashboard Rekap</button>
+                <button onclick="openDbModal()" id="btnDbConfig" class="tab-btn tab-btn-subtle hidden" title="Pengaturan Database Google Sheets">⚙️ Database</button>
+                <button onclick="handleAdminBtnClick()" id="btnAdminNav" class="tab-btn tab-btn-admin">🔐 Login Admin</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="main-container">
+
+        <!-- TAB FORM KUNJUNGAN -->
+        <section id="sectionForm" class="card">
+            <div class="card-header">
+                <h2>Buku Tamu Kunjungan</h2>
+                <p>Silakan isi data diri dan tujuan kunjungan Anda ke perpustakaan.</p>
+            </div>
+
+            <form id="visitForm" onsubmit="handleSubmit(event)">
+                <div class="form-group">
+                    <label for="nama">Nama Lengkap</label>
+                    <input type="text" id="nama" required placeholder="Contoh: Rafsya al-mizan">
+                </div>
+
+                <div class="form-group">
+                    <label for="kelas">Kelas</label>
+                    <select id="kelas" required onchange="handleKelasChange()">
+                        <option value="" disabled selected>Pilih kelas...</option>
+                        <optgroup label="Rekayasa Perangkat Lunak (RPL)">
+                            <option value="X RPL 1">X RPL 1</option>
+                            <option value="X RPL 2">X RPL 2</option>
+                            <option value="XI RPL 1">XI RPL 1</option>
+                            <option value="XI RPL 2">XI RPL 2</option>
+                            <option value="XII RPL 1">XII RPL 1</option>
+                            <option value="XII RPL 2">XII RPL 2</option>
+                        </optgroup>
+                        <optgroup label="Teknik Komputer & Jaringan (TKJ)">
+                            <option value="X TKJ 1">X TKJ 1</option>
+                            <option value="X TKJ 2">X TKJ 2</option>
+                            <option value="XI TKJ 1">XI TKJ 1</option>
+                            <option value="XI TKJ 2">XI TKJ 2</option>
+                            <option value="XII TKJ 1">XII TKJ 1</option>
+                            <option value="XII TKJ 2">XII TKJ 2</option>
+                        </optgroup>
+                        <optgroup label="Broadcasting (BC)">
+                            <option value="X BC 1">X BC 1</option>
+                            <option value="X BC 2">X BC 2</option>
+                            <option value="XI BC 1">XI BC 1</option>
+                            <option value="XI BC 2">XI BC 2</option>
+                            <option value="XII BC 1">XII BC 1</option>
+                            <option value="XII BC 2">XII BC 2</option>
+                        </optgroup>
+                        <optgroup label="Lainnya">
+                            <option value="DLL">DLL (Lainnya / Guru / Tamu)</option>
+                        </optgroup>
+                    </select>
+                </div>
+
+                <!-- Input Khusus jika Kelas memilih DLL -->
+                <div class="form-group hidden" id="kelasLainnyaGroup">
+                    <label for="kelasLainnya">Keterangan Kelas / Status Lainnya</label>
+                    <input type="text" id="kelasLainnya" placeholder="Contoh: Guru, Tamu, XII AKL 2, Staff, dll.">
+                    <small class="text-xs text-gray">Isi nama kelas Anda atau status kunjungan jika bukan dari daftar di atas.</small>
+                </div>
+
+                <div class="form-group">
+                    <label for="tujuan">Tujuan Datang</label>
+                    <select id="tujuan" required>
+                        <option value="" disabled selected>Pilih tujuan kunjungan...</option>
+                        <option value="Membaca Buku">Membaca Buku</option>
+                        <option value="Meminjam/Mengembalikan Buku">Meminjam / Mengembalikan Buku</option>
+                        <option value="Mengerjakan Tugas / Laptopan">Mengerjakan Tugas / Belajar</option>
+                        <option value="Lainnya">Lainnya</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="displayWaktu">Waktu Kunjungan (WIB)</label>
+                    <input type="text" id="displayWaktu" readonly class="input-readonly">
+                </div>
+
+                <button type="submit" id="btnSubmitForm" class="btn-submit">Kirim Kunjungan</button>
+            </form>
+        </section>
+
+        <!-- TAB REKAP & RIWAYAT -->
+        <section id="sectionRekap" class="hidden space-y">
+            
+            <!-- Status Koneksi Database Google Sheets -->
+            <div class="card db-status-card">
+                <div class="db-status-content">
+                    <div class="db-status-info">
+                        <span id="dbStatusIndicator" class="status-indicator local"></span>
+                        <div>
+                            <div class="db-status-title" id="dbStatusTitle">Mode Database: Local Storage</div>
+                            <div class="text-xs text-gray" id="dbStatusDesc">Data tersimpan di browser ini. Hubungkan Google Sheets untuk database cloud online.</div>
+                        </div>
+                    </div>
+                    <div class="db-status-actions">
+                        <button onclick="syncDataFromCloud()" id="btnSyncCloud" class="btn-action-sm">🔄 Sinkron</button>
+                        <button onclick="openDbModal()" class="btn-action-sm">⚙️ Set Google Sheets</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Tanggal -->
+            <div class="card">
+                <div class="filter-header">
+                    <h3>🔍 Filter & Rekap Berdasarkan Tanggal</h3>
+                    <div class="filter-controls">
+                        <label for="filterTanggal" class="text-xs">Pilih Tanggal:</label>
+                        <input type="date" id="filterTanggal" onchange="filterByDate()" class="date-input">
+                        <button onclick="resetFilter()" class="btn-reset-filter">Reset Filter</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tabel Riwayat Kunjungan -->
+            <div class="card">
+                <div class="flex-between mb-4">
+                    <div class="title-with-badge">
+                        <h3 id="tableTitle">📋 Riwayat Kunjungan</h3>
+                        <span id="badgeAdminMode" class="badge-admin hidden">🛡️ Mode Admin Aktif</span>
+                    </div>
+                    <div class="table-header-actions">
+                        <button onclick="downloadRekapCSV()" id="btnDownloadRekap" class="btn-download" title="Unduh rekap data kunjungan ke file Excel / CSV">📥 Download Rekap (Excel)</button>
+                        <!-- Tombol Hapus Hanya Muncul & Aktif untuk Admin -->
+                        <button id="btnHapusSemua" onclick="resetData()" class="btn-danger-text hidden">⚠️ Hapus Semua Data (Admin)</button>
+                    </div>
+                </div>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Waktu (WIB)</th>
+                                <th>Nama Siswa / Pengunjung</th>
+                                <th>Kelas</th>
+                                <th>Tujuan</th>
+                                <th id="thAksi" class="col-aksi-header hidden">Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody id="logTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tabel Statistik Keaktifan -->
+            <div class="card">
+                <h3>🏆 Statistik Keaktifan Pengunjung</h3>
+                <p class="text-xs text-gray">Peringkat pengunjung berdasarkan frekuensi kunjungan.</p>
+                <div class="table-responsive">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Peringkat</th>
+                                <th>Nama Pengunjung</th>
+                                <th>Kelas</th>
+                                <th class="text-center">Total Kunjungan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="rankingTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- MODAL LOGIN ADMIN -->
+    <div id="modalAdmin" class="modal-backdrop hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>🔐 Login Admin Perpustakaan SMKN 6 Tangerang Selatan</h3>
+                <button class="modal-close" onclick="closeAdminModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-xs text-gray mb-3">Hanya admin perpustakaan yang memiliki akses untuk menghapus data kunjungan.</p>
+                <div class="form-group">
+                    <label for="adminPasswordInput">Password Admin</label>
+                    <input type="password" id="adminPasswordInput" placeholder="Masukkan password admin..." onkeydown="if(event.key==='Enter') executeAdminLogin()">
+                </div>
+                <div id="adminLoginError" class="alert-error hidden">Password salah! Silakan coba lagi.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAdminModal()">Batal</button>
+                <button class="btn-primary" onclick="executeAdminLogin()">Masuk sebagai Admin</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL PENGATURAN GOOGLE SHEETS -->
+    <div id="modalDb" class="modal-backdrop hidden">
+        <div class="modal-box modal-lg">
+            <div class="modal-header">
+                <h3>📊 Konfigurasi Database Google Sheets</h3>
+                <button class="modal-close" onclick="closeDbModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-xs text-gray mb-3">
+                    Gunakan Google Spreadsheet sebagai database gratis & real-time! Data kunjungan dari pengunjung akan langsung tersimpan ke spreadsheet Anda.
+                </p>
+
+                <div class="form-group">
+                    <label for="sheetsWebappUrl">Google Apps Script Web App URL</label>
+                    <input type="url" id="sheetsWebappUrl" placeholder="https://script.google.com/macros/s/.../exec">
+                    <small class="text-xs text-gray">Masukkan URL hasil Deploy Web App dari Google Apps Script.</small>
+                </div>
+
+                <div class="guide-accordion">
+                    <details>
+                        <summary><strong>📖 Cara Mudah Membuat Database Google Sheets (4 Langkah)</strong></summary>
+                        <div class="guide-content">
+                            <ol>
+                                <li>Buka <a href="https://sheets.new" target="_blank" rel="noopener">sheets.new</a> untuk membuat Google Spreadsheet baru.</li>
+                                <li>Klik menu <strong>Ekstensi (Extensions)</strong> &gt; <strong>Apps Script</strong>.</li>
+                                <li>Hapus semua kode di sana, lalu tempel kode script yang ada di file <code>google_apps_script.js</code> di folder web ini.</li>
+                                <li>Klik tombol <strong>Terapkan (Deploy)</strong> &gt; <strong>Penerapan baru (New deployment)</strong>:
+                                    <ul>
+                                        <li>Pilih jenis: <strong>Aplikasi Web (Web app)</strong></li>
+                                        <li>Jalankan sebagai: <strong>Saya (Me)</strong></li>
+                                        <li>Siapa yang memiliki akses: <strong>Siapa saja (Anyone)</strong></li>
+                                    </ul>
+                                </li>
+                                <li>Salin <strong>URL Aplikasi Web</strong> yang dihasilkan dan tempel pada kolom di atas!</li>
+                            </ol>
+                        </div>
+                    </details>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="disconnectDb()">Gunakan LocalStorage Saja</button>
+                <button class="btn-primary" onclick="saveDbConfig()">Simpan & Hubungkan</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL KONFIRMASI HAPUS SEMUA DATA DENGAN PASSWORD -->
+    <div id="modalConfirmDeleteAll" class="modal-backdrop hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>⚠️ Konfirmasi Hapus Seluruh Data</h3>
+                <button class="modal-close" onclick="closeConfirmDeleteModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-xs text-gray mb-3">
+                    <strong>Peringatan Penting:</strong> Tindakan ini akan mengosongkan <strong>SELURUH</strong> data riwayat kunjungan perpustakaan (baik di penyimpanan lokal browser maupun di Google Sheets).
+                </p>
+                <div class="form-group">
+                    <label for="confirmDeletePasswordInput">Masukkan Password Admin untuk Konfirmasi:</label>
+                    <input type="password" id="confirmDeletePasswordInput" placeholder="Ketik password admin..." onkeydown="if(event.key==='Enter') executeConfirmDeleteAll()">
+                </div>
+                <div id="confirmDeleteError" class="alert-error hidden">Password salah! Data riwayat batal dihapus.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeConfirmDeleteModal()">Batal</button>
+                <button class="btn-danger-modal" onclick="executeConfirmDeleteAll()">Ya, Hapus Semua Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="toast hidden"></div>
+
+    <script src="jawa.js"></script>
+</body>
+</html>
