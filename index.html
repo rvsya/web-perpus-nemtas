@@ -205,6 +205,30 @@
         </div>
     </div>
 
+    <!-- MODAL KONFIRMASI HAPUS 1 DATA DENGAN PASSWORD -->
+    <div id="modalConfirmDeleteOne" class="modal-backdrop hidden">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3>🗑️ Konfirmasi Hapus Data Kunjungan</h3>
+                <button class="modal-close" onclick="closeConfirmDeleteOneModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="text-xs text-gray mb-3">
+                    Anda akan menghapus data kunjungan atas nama: <strong id="deleteOneName">-</strong>
+                </p>
+                <div class="form-group">
+                    <label for="confirmDeleteOnePasswordInput">Masukkan Password Admin untuk Konfirmasi:</label>
+                    <input type="password" id="confirmDeleteOnePasswordInput" placeholder="Ketik password admin..." onkeydown="if(event.key==='Enter') executeConfirmDeleteOne()">
+                </div>
+                <div id="confirmDeleteOneError" class="alert-error hidden">Password salah! Data batal dihapus.</div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeConfirmDeleteOneModal()">Batal</button>
+                <button class="btn-danger-modal" onclick="executeConfirmDeleteOne()">Ya, Hapus Data Ini</button>
+            </div>
+        </div>
+    </div>
+
     <!-- MODAL KONFIRMASI HAPUS SEMUA DATA DENGAN PASSWORD -->
     <div id="modalConfirmDeleteAll" class="modal-backdrop hidden">
         <div class="modal-box">
