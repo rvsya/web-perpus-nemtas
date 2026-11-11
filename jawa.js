@@ -289,8 +289,10 @@ function updateAdminUI() {
 // 6. PENGHAPUSAN RIWAYAT (HANYA BISA DIAKSES ADMIN)
 // ============================================================================
 
-// Hapus SATU data riwayat kunjungan (Admin Only)
-async function handleDeleteRow(visitId) {
+// Hapus SATU data riwayat kunjungan (Admin Only, dengan Konfirmasi Password)
+let pendingDeleteVisitId = null; // Menyimpan ID kunjungan yang akan dihapus
+
+function handleDeleteRow(visitId) {
     if (!isAdmin()) {
         alert('Akses ditolak! Hanya admin yang dapat menghapus data kunjungan.');
         openAdminModal();
@@ -301,11 +303,62 @@ async function handleDeleteRow(visitId) {
     const target = visits.find(v => v.id === visitId);
     const targetName = target ? target.nama : 'data ini';
 
-    if (!confirm(`Yakin ingin menghapus riwayat kunjungan atas nama "${targetName}"?`)) {
+    // Simpan ID target dan buka modal konfirmasi password
+    pendingDeleteVisitId = visitId;
+    openConfirmDeleteOneModal(targetName);
+}
+
+function openConfirmDeleteOneModal(namaTarget) {
+    const modal = document.getElementById('modalConfirmDeleteOne');
+    const input = document.getElementById('confirmDeleteOnePasswordInput');
+    const errorEl = document.getElementById('confirmDeleteOneError');
+    const nameEl = document.getElementById('deleteOneName');
+
+    if (modal) {
+        modal.classList.remove('hidden');
+        if (input) input.value = '';
+        if (errorEl) errorEl.classList.add('hidden');
+        if (nameEl) nameEl.innerText = namaTarget || '-';
+        setTimeout(() => { if (input) input.focus(); }, 100);
+    }
+}
+
+function closeConfirmDeleteOneModal() {
+    const modal = document.getElementById('modalConfirmDeleteOne');
+    if (modal) modal.classList.add('hidden');
+    pendingDeleteVisitId = null;
+}
+
+async function executeConfirmDeleteOne() {
+    const inputEl = document.getElementById('confirmDeleteOnePasswordInput');
+    const errorEl = document.getElementById('confirmDeleteOneError');
+    const inputPass = inputEl ? inputEl.value : '';
+
+    if (!inputPass) {
+        if (errorEl) {
+            errorEl.innerText = 'Password tidak boleh kosong!';
+            errorEl.classList.remove('hidden');
+        }
         return;
     }
 
+    const inputHash = btoa(inputPass);
+    if (!ADMIN_PASS_HASHES.includes(inputHash)) {
+        if (errorEl) {
+            errorEl.innerText = 'Password salah! Data batal dihapus.';
+            errorEl.classList.remove('hidden');
+        }
+        return;
+    }
+
+    // Password terkonfirmasi benar!
+    const visitId = pendingDeleteVisitId;
+    closeConfirmDeleteOneModal();
+
+    if (!visitId) return;
+
     // Hapus dari LocalStorage
+    let visits = getLocalVisits();
     visits = visits.filter(v => v.id !== visitId);
     saveLocalVisits(visits);
     loadDashboardData();
